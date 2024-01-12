@@ -1,35 +1,42 @@
-const fs = require('fs');
+import { createRequire } from "module";
+import fetch from "node-fetch";
 
-let sillaba = "";
-let array = [];
-let rime = [];
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 
-fs.readFile('parole.txt', (error, data) => {
-    array = String(data).split('\n');
-    if (error) {
-        throw error;
-    };
-});
+const require = createRequire(import.meta.url);
+
+function login(username, password) {
+    return new Promise((resolve, reject) => {
+        fetch("https://ws.progettimolinari.it/credential/login", {
+            method: "Post",
+            headers: {
+                "content-type": "application/json",
+                key: "52e671cb-61fc-4c68-845e-520773ac9edc",
+            },
+            body: JSON.stringify({ username: username, password: password }),
+        })
+            .then((element) => element.json())
+            .then((element) => {
+                if (element.result) {
+                    resolve(true);
+                } else {
+                    reject(false);
+                };
+            })
+            .catch((error) => reject(error));
+    });
+};
 
 const readline = require("readline").createInterface({
     input: process.stdin,
     output: process.stdout
 });
-readline.question("Inserire una parola:\n", parola => {
-    if (parola.length >= 3) {
-        sillaba = parola.substring(parola.length - 3);
-        console.log(`Questa è la tua parola: ${parola}!`);
-        array.forEach((e) => {
-            if (e.length >= 3) {
-                const x = e.substring(e.length - 3);
-                if (x == sillaba) {
-                    rime.push(e);
-                    console.log(e);
-                }
-            }
+readline.question("Inserire un username:\n", username => {
+    readline.question("Inserire una password:\n", password => {
+        console.log(`Questo è lo username: ${username}!\nQuesta è la password: ${password}!\n`);
+        login(username, password).then((response) => {
+            console.log("Login: " + response);
         });
-    } else {
-        console.log('La parola deve avere almeno 3 lettere:\n');
-    }
-    readline.close();
+        readline.close();
+    });
 });
